@@ -1,0 +1,150 @@
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Scanner;
+
+
+public class BinaryAdaBoosting {
+	
+	final double epsilon = 2.71828;
+
+	public static void main(String[] args) throws FileNotFoundException {
+		// TODO Auto-generated method stub
+
+		Scanner sc = new Scanner(new File("file1.txt"));
+		int iterations = sc.nextInt();
+		int NoOfSamples = sc.nextInt();
+		double epsilon = sc.nextDouble();
+		float[] x = new float[NoOfSamples];
+		int[] y = new int[NoOfSamples];
+		double[] probs = new double[NoOfSamples];
+		for(int i = 0;i<NoOfSamples;i++){
+			x[i] = sc.nextFloat();
+		}
+		
+		for(int i = 0;i<NoOfSamples;i++){
+			y[i] = sc.nextInt();
+		}
+		
+		for(int i = 0;i<NoOfSamples;i++){
+			probs[i] = sc.nextDouble();
+		}
+		
+		double[] thresholdArray = new double[2];
+		thresholdArray = calculateThreshold(x,y,probs,NoOfSamples);
+		System.out.println("The error of ht: "+thresholdArray[2]);
+		
+		
+	}
+	
+	
+	public static double[] calculateThreshold(float[] x,int[] y, double[] probs,int NoOfSamples){
+		
+		ArrayList<Double> thresholds = new ArrayList<Double>();
+		int greaterOrSmaller = 0;
+		double errorProbs = 0;
+		double errorProbsFinal = 10000;
+		int errorProbsIndex = 0;
+		int greaterOrSmallerFinal = 0;
+		double[] thresholdArray = new double[3];
+		for(int i = 0; i<x.length-1;i++){
+			if(y[i] != y[i+1]){
+				thresholds.add((double) ((x[i]+x[i+1])/2.0));
+			}
+		}
+		
+		for(int i = 0;i<thresholds.size();i++){
+			greaterOrSmaller = selectingSideOfThreshold(x,y,thresholds.get(i),NoOfSamples);
+			
+			errorProbs = calculatingErrorProbs(x,y,probs,thresholds.get(i),NoOfSamples,greaterOrSmaller);
+			if(errorProbs < errorProbsFinal){
+				errorProbsFinal = errorProbs;
+				errorProbsIndex = i;
+				greaterOrSmallerFinal = greaterOrSmaller;
+			}
+		}
+		thresholdArray[0] = greaterOrSmallerFinal;
+		thresholdArray[1] = thresholds.get(errorProbsIndex);
+		thresholdArray[2] = errorProbsFinal;
+		return thresholdArray;
+	}
+	
+	public static int selectingSideOfThreshold(float[] x,int[] y,Double threshold,int NoOfSamples){
+		
+		int errorLess = 0;
+		int errorGreater = 0;
+		for(int i = 0; i<NoOfSamples;i++){
+			if(x[i]<threshold){
+				if(y[i] == -1){
+					errorLess++;
+				}
+			}
+			
+			if(x[i] > threshold){
+				if(y[i] == 1){
+					errorLess++;
+				}
+			}
+			
+			if(x[i] < threshold){
+				if(y[i] == 1){
+					errorGreater++;
+				}
+			}
+			
+			if(x[i] > threshold){
+				if(y[i] == -1){
+					errorGreater++;
+				}
+			}
+			
+		}
+		
+		if(errorLess >= errorGreater){
+			return 1;
+		}
+		else{
+			return 0;
+		}
+	}
+	
+	public static double calculatingErrorProbs(float[] x,int[] y,double[] probs,Double threshold,int NoOfSamples,int greaterOrSmaller){
+		
+		double errorProbs = 0;
+		if(greaterOrSmaller == 1){
+			
+			for(int i = 0; i<NoOfSamples; i++){
+				if(x[i]<threshold){
+					if(y[i] == -1){
+						errorProbs = errorProbs + probs[i];
+					}
+				}
+				
+				if(x[i] > threshold){
+					if(y[i] == 1){
+						errorProbs = errorProbs + probs[i];
+					}
+				}
+			}
+		}
+		else{
+			
+			for(int i = 0; i<NoOfSamples; i++){
+				if(x[i]<threshold){
+					if(y[i] == 1){
+						errorProbs = errorProbs + probs[i];
+					}
+				}
+				
+				if(x[i] > threshold){
+					if(y[i] == -1){
+						errorProbs = errorProbs + probs[i];
+					}
+				}
+			}
+		}
+		
+		return errorProbs;
+	}
+
+}
